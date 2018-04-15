@@ -9,4 +9,5 @@ BuildingEscape/Content/StarterContent/
 
 # Visual Studio Generated Files
 *.sdf
+*.VC.db
 
