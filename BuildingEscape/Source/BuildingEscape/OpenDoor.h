@@ -27,6 +27,9 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+    void OpenDoor(float DeltaTime);
+    void CloseDoor(float DeltaTime);
+
 		
 private:
     UPROPERTY(VisibleAnywhere)
@@ -34,4 +37,7 @@ private:
 
     UPROPERTY(EditAnywhere)
     ATriggerVolume* m_pPressurePlate;
+
+    AActor* m_pPlayer;
+    const float m_doorSpeed = 60;
 };

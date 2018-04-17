@@ -2,6 +2,8 @@
 
 #include "OpenDoor.h"
 #include "GameFramework/Actor.h"
+#include "Engine/World.h"
+#include "Math/UnrealMathUtility.h"
 
 // Sets default values for this component's properties
 UOpenDoor::UOpenDoor()
@@ -19,7 +21,13 @@ void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
+    m_pPlayer = GetWorld()->GetFirstPlayerController()->GetPawn();
+
+    // Start with the door closed (180 degrees)
+    AActor* pOwner = GetOwner();
+    FRotator rot = pOwner->GetActorRotation();
+    rot.Yaw = 180.0f;
+    pOwner->SetActorRotation(rot);
 	
 }
 
@@ -29,17 +37,53 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+    // Poll the trigger volume
+    // If Player steps in the volume, open the door.
+    static bool bOpenDoor = false; 
+    if (m_pPressurePlate->IsOverlappingActor(m_pPlayer))
+    {
+        bOpenDoor = true;
+    }
+    else
+    {
+        bOpenDoor = false;
+    }
+
+    if (bOpenDoor)
+        OpenDoor(DeltaTime);
+    else
+        CloseDoor(DeltaTime);
+}
+
+void UOpenDoor::OpenDoor(float DeltaTime)
+{
     AActor* pOwner = GetOwner();
     FRotator rot = pOwner->GetActorRotation();
 
-    const float speed = 30;
-    if (rot.Yaw > 90)
-    {
-        rot.Yaw -= DeltaTime * speed;
-    }
     
-    UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);
+    if (rot.Yaw > 90.0f || rot.Yaw < 0)
+    {
+        rot.Yaw -= DeltaTime * m_doorSpeed;
+        FMath::Clamp(rot.Yaw, 90.0f, 180.0f);
+        pOwner->SetActorRotation(rot);
+    }
 
-    pOwner->SetActorRotation(rot);
+    // UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);    
+}
+
+void UOpenDoor::CloseDoor(float DeltaTime)
+{
+    AActor* pOwner = GetOwner();
+    FRotator rot = pOwner->GetActorRotation();
+
+    UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);
+    if (FMath::Abs(rot.Yaw) < 179.0f)
+    {
+        rot.Yaw += DeltaTime * m_doorSpeed;
+        FMath::Clamp(rot.Yaw, 90.0f, 180.0f);
+        pOwner->SetActorRotation(rot);
+    }
+
+    //UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);  
 }
 
