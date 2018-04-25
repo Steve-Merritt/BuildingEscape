@@ -3,6 +3,7 @@
 #include "Grabber.h"
 #include "Engine/World.h"
 #include "Runtime/Engine/Public/DrawDebugHelpers.h"
+#include "Runtime/Engine/Classes/Components/PrimitiveComponent.h"
 #include "GameFramework/Actor.h"
 
 // Sets default values for this component's properties
@@ -22,19 +23,17 @@ void UGrabber::BeginPlay()
 	Super::BeginPlay();
 
     // Look for attached physics handle
-    m_physicsHandle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
-    if (m_physicsHandle)
-    {
-        
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("No Physics Handle found on %s."), *GetOwner()->GetName());
-    }
+    FindPhysicsHandleComponent();
 
     // Look for attached input component
+    SetupInputComponent();
+	
+}
+
+void UGrabber::SetupInputComponent()
+{
     m_inputComponent = GetOwner()->FindComponentByClass<UInputComponent>();
-    if (m_physicsHandle)
+    if (m_inputComponent)
     {
         m_inputComponent->BindAction("Grab", IE_Pressed, this, &UGrabber::Grab);
         m_inputComponent->BindAction("Grab", IE_Released, this, &UGrabber::Drop);
@@ -43,17 +42,69 @@ void UGrabber::BeginPlay()
     {
         UE_LOG(LogTemp, Error, TEXT("No Input Component found on %s."), *GetOwner()->GetName());
     }
-	
+}
+
+void UGrabber::FindPhysicsHandleComponent()
+{
+    m_physicsHandle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
+    if (m_physicsHandle)
+    {
+
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("No Physics Handle found on %s."), *GetOwner()->GetName());
+    }
 }
 
 void UGrabber::Grab()
 {
-    UE_LOG(LogTemp, Error, TEXT("Grab Pressed!"));
+    // LINE TRACE and see if we reach any actors with physics body collision channel set
+    auto hitResult = GetFirstPhysicsBodyInReach();
+    auto componentToGrab = hitResult.GetComponent();
+    auto actorHit = hitResult.GetActor();
+
+    // attach physics handle
+    if (actorHit)
+    {
+        m_physicsHandle->GrabComponent(componentToGrab, NAME_None, componentToGrab->GetOwner()->GetActorLocation(), true);
+    }
 }
 
 void UGrabber::Drop()
 {
-    UE_LOG(LogTemp, Error, TEXT("Grab Released!"));
+    // release physics handle
+    m_physicsHandle->ReleaseComponent();
+}
+
+FHitResult UGrabber::GetFirstPhysicsBodyInReach() const
+{
+    FVector playerVec;
+    FRotator playerRot;
+    GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(playerVec, playerRot);
+
+    FVector lineTraceEnd = playerVec + playerRot.Vector() * m_reach;
+
+    // Setup query parameters
+    FCollisionQueryParams traceParameters(FName(TEXT("")), false, GetOwner());
+
+    /// Ray-cast out to reach distance
+    FHitResult hit;
+    GetWorld()->LineTraceSingleByObjectType(
+        hit,
+        playerVec,
+        lineTraceEnd,
+        FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
+        traceParameters
+    );
+
+    AActor* pActorHit = hit.GetActor();
+    if (pActorHit)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("%s hit."), *(pActorHit->GetName()));
+    }
+
+    return hit;
 }
 
 // Called every frame
@@ -61,41 +112,20 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+
     FVector playerVec;
     FRotator playerRot;
     GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(playerVec, playerRot);
 
-    //UE_LOG(LogTemp, Warning, TEXT("vec: %s, rot: %s"), *playerVec.ToString(), *playerRot.ToString());
-    
     FVector lineTraceEnd = playerVec + playerRot.Vector() * m_reach;
-    DrawDebugLine(
-        GetWorld(),
-        playerVec,
-        lineTraceEnd,
-        FColor::Red,
-        false,
-        0.f,
-        0.f,
-        10.f
-    );
 
-	// Setup query parameters
-	FCollisionQueryParams traceParameters(FName(TEXT("")), false, GetOwner());
+    // If physics handle is attached move the object we're holding
+    if (m_physicsHandle->GrabbedComponent)
+    {
+        // move the object that we're holding
+        m_physicsHandle->SetTargetLocation(lineTraceEnd);
+    }
 
-	/// Ray-cast out to reach distance
-	FHitResult hit;
-	GetWorld()->LineTraceSingleByObjectType(
-		hit,
-		playerVec,
-		lineTraceEnd,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
-		traceParameters
-	);
-
-	AActor* pActorHit = hit.GetActor();
-	if(pActorHit)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("%s hit."), *(pActorHit->GetName()));
-	}
+    
 }
 
