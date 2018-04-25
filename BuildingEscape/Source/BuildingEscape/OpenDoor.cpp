@@ -24,10 +24,10 @@ void UOpenDoor::BeginPlay()
     m_pPlayer = GetWorld()->GetFirstPlayerController()->GetPawn();
 
     // Start with the door closed (180 degrees)
-    AActor* pOwner = GetOwner();
-    FRotator rot = pOwner->GetActorRotation();
+    m_pOwner = GetOwner();
+    FRotator rot = m_pOwner->GetActorRotation();
     rot.Yaw = 180.0f;
-    pOwner->SetActorRotation(rot);
+    m_pOwner->SetActorRotation(rot);
 	
 }
 
@@ -56,16 +56,14 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 }
 
 void UOpenDoor::OpenDoor(float DeltaTime)
-{
-    AActor* pOwner = GetOwner();
-    FRotator rot = pOwner->GetActorRotation();
-
+{ 
+    FRotator rot = m_pOwner->GetActorRotation();
     
     if (rot.Yaw > 90.0f || rot.Yaw < 0)
     {
         rot.Yaw -= DeltaTime * m_doorSpeed;
         FMath::Clamp(rot.Yaw, 90.0f, 180.0f);
-        pOwner->SetActorRotation(rot);
+        m_pOwner->SetActorRotation(rot);
     }
 
     // UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);    
@@ -73,15 +71,13 @@ void UOpenDoor::OpenDoor(float DeltaTime)
 
 void UOpenDoor::CloseDoor(float DeltaTime)
 {
-    AActor* pOwner = GetOwner();
-    FRotator rot = pOwner->GetActorRotation();
+    FRotator rot = m_pOwner->GetActorRotation();
 
-    UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);
     if (FMath::Abs(rot.Yaw) < 179.0f)
     {
-        rot.Yaw += DeltaTime * m_doorSpeed;
+        rot.Yaw += DeltaTime * m_doorSpeed * 1.5;
         FMath::Clamp(rot.Yaw, 90.0f, 180.0f);
-        pOwner->SetActorRotation(rot);
+        m_pOwner->SetActorRotation(rot);
     }
 
     //UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);  
