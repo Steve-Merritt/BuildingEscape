@@ -25,10 +25,10 @@ void UOpenDoor::BeginPlay()
     //m_pPlayer = GetWorld()->GetFirstPlayerController()->GetPawn();
 
     // Start with the door closed (180 degrees)
-    m_pOwner = GetOwner();
-    FRotator rot = m_pOwner->GetActorRotation();
-    rot.Yaw = 180.0f;
-    m_pOwner->SetActorRotation(rot);
+    //m_pOwner = GetOwner();
+    //FRotator rot = m_pOwner->GetActorRotation();
+    //rot.Yaw = 180.0f;
+    //m_pOwner->SetActorRotation(rot);
 	
 }
 
@@ -51,51 +51,62 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
     }
 
     if (bOpenDoor)
+    {
         OpenDoor(DeltaTime);
+    }
     else
+    {
         CloseDoor(DeltaTime);
+    }
 }
 
 void UOpenDoor::OpenDoor(float DeltaTime)
 { 
-    FRotator rot = m_pOwner->GetActorRotation();
-    
-    if (rot.Yaw > 90.0f || rot.Yaw < 0)
-    {
-        rot.Yaw -= DeltaTime * m_doorSpeed;
-        FMath::Clamp(rot.Yaw, 90.0f, 180.0f);
-        m_pOwner->SetActorRotation(rot);
-    }
+    //FRotator rot = m_pOwner->GetActorRotation();
+    //
+    //if (rot.Yaw > 90.0f || rot.Yaw < 0)
+    //{
+    //    rot.Yaw -= DeltaTime * DoorSpeed;
+    //    FMath::Clamp(rot.Yaw, 90.0f, 180.0f);
+    //    m_pOwner->SetActorRotation(rot);
+    //}
 
-    // UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);    
+    // UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);  
+
+    OnOpenRequest.Broadcast();
 }
 
 void UOpenDoor::CloseDoor(float DeltaTime)
 {
-    FRotator rot = m_pOwner->GetActorRotation();
+    //FRotator rot = m_pOwner->GetActorRotation();
 
-    if (FMath::Abs(rot.Yaw) < 179.0f)
-    {
-        rot.Yaw += DeltaTime * m_doorSpeed * 1.5;
-        FMath::Clamp(rot.Yaw, 90.0f, 180.0f);
-        m_pOwner->SetActorRotation(rot);
-    }
+    //if (FMath::Abs(rot.Yaw) < 179.0f)
+    //{
+    //    rot.Yaw += DeltaTime * DoorSpeed * 1.5;
+    //    FMath::Clamp(rot.Yaw, 90.0f, 180.0f);
+    //    m_pOwner->SetActorRotation(rot);
+    //}
 
     //UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);  
+
+    OnCloseRequest.Broadcast();
 }
 
 float UOpenDoor::GetTotalMassOfActorsOnPlate()
 {
     float totalMass = 0.f;
 
-    // Find all overlapping actors
-    TArray<AActor*> overlappingActors;
-    m_pPressurePlate->GetOverlappingActors(overlappingActors);
-
-    // Iterate through them adding their masses
-    for (const auto* actor : overlappingActors)
+    if (PressurePlate)
     {
-        totalMass += actor->FindComponentByClass<UPrimitiveComponent>()->GetMass();
+        // Find all overlapping actors
+        TArray<AActor*> overlappingActors;
+        PressurePlate->GetOverlappingActors(overlappingActors);
+
+        // Iterate through them adding their masses
+        for (const auto* actor : overlappingActors)
+        {
+            totalMass += actor->FindComponentByClass<UPrimitiveComponent>()->GetMass();
+        }
     }
 
     return totalMass;
