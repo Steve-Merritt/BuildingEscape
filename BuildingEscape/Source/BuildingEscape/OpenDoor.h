@@ -25,9 +25,6 @@ public:
     // Called every frame
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-    void OpenDoor(float DeltaTime);
-    void CloseDoor(float DeltaTime);
-
     UPROPERTY(BlueprintAssignable)
     FOnOpenRequest OnOpenRequest;
 
@@ -42,7 +39,7 @@ private:
     float GetTotalMassOfActorsOnPlate();
 		
     UPROPERTY(EditAnywhere)
-    float OpenAngle = -90.f;
+    float TriggerMass = 30.0f;
 
     UPROPERTY(EditAnywhere)
     ATriggerVolume* PressurePlate = nullptr;

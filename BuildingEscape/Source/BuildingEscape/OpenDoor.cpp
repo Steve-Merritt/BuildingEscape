@@ -12,26 +12,13 @@ UOpenDoor::UOpenDoor()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
-
 
 // Called when the game starts
 void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
-
-    //m_pPlayer = GetWorld()->GetFirstPlayerController()->GetPawn();
-
-    // Start with the door closed (180 degrees)
-    //m_pOwner = GetOwner();
-    //FRotator rot = m_pOwner->GetActorRotation();
-    //rot.Yaw = 180.0f;
-    //m_pOwner->SetActorRotation(rot);
-	
 }
-
 
 // Called every frame
 void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -41,55 +28,14 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
     // Poll the trigger volume
     // If Player steps in the volume, open the door.
     static bool bOpenDoor = false; 
-    if (GetTotalMassOfActorsOnPlate() > 30.f) // TODO make weight into parameter
+    if (GetTotalMassOfActorsOnPlate() > TriggerMass) // TODO make weight into parameter
     {
-        bOpenDoor = true;
+        OnOpenRequest.Broadcast();
     }
     else
     {
-        bOpenDoor = false;
+        OnCloseRequest.Broadcast();
     }
-
-    if (bOpenDoor)
-    {
-        OpenDoor(DeltaTime);
-    }
-    else
-    {
-        CloseDoor(DeltaTime);
-    }
-}
-
-void UOpenDoor::OpenDoor(float DeltaTime)
-{ 
-    //FRotator rot = m_pOwner->GetActorRotation();
-    //
-    //if (rot.Yaw > 90.0f || rot.Yaw < 0)
-    //{
-    //    rot.Yaw -= DeltaTime * DoorSpeed;
-    //    FMath::Clamp(rot.Yaw, 90.0f, 180.0f);
-    //    m_pOwner->SetActorRotation(rot);
-    //}
-
-    // UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);  
-
-    OnOpenRequest.Broadcast();
-}
-
-void UOpenDoor::CloseDoor(float DeltaTime)
-{
-    //FRotator rot = m_pOwner->GetActorRotation();
-
-    //if (FMath::Abs(rot.Yaw) < 179.0f)
-    //{
-    //    rot.Yaw += DeltaTime * DoorSpeed * 1.5;
-    //    FMath::Clamp(rot.Yaw, 90.0f, 180.0f);
-    //    m_pOwner->SetActorRotation(rot);
-    //}
-
-    //UE_LOG(LogTemp, Warning, TEXT("%s Yaw is %f"), *pOwner->GetName(), rot.Yaw);  
-
-    OnCloseRequest.Broadcast();
 }
 
 float UOpenDoor::GetTotalMassOfActorsOnPlate()
